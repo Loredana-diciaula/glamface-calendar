@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root{
+  --brand: var(--brand, #F3EFE7);
+  --textclr: var(--textclr, #000000);
+}
+html,body{height:100%;background:var(--brand);} 
+*{color:var(--textclr);} 
+button{border-radius:1rem;}
+input, textarea{outline:none}
