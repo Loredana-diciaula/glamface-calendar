@@ -1,6 +1,6 @@
 'use client'
 import { startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay } from 'date-fns'
-import de from 'date-fns/locale/de'
+import { de } from 'date-fns/locale'
 import type { Appt } from '@/app/(dashboard)/page'
 import { useState } from 'react'
 
