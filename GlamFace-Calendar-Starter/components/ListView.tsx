@@ -1,6 +1,6 @@
 'use client'
 import { format, isBefore } from 'date-fns'
-import de from 'date-fns/locale/de'
+import { de } from 'date-fns/locale'
 import StatusBadge from './StatusBadge'
 import { supabase } from '@/lib/supabaseClient'
 import type { Appt } from '@/app/(dashboard)/page'
