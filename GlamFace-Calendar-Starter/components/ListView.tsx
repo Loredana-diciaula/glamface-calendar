@@ -1,15 +1,6 @@
-'use client'
-import { format, isBefore } from 'date-fns'
-import { de } from 'date-fns/locale'
-import StatusBadge from './StatusBadge'
-import { supabase } from '@/lib/supabaseClient'
-import type { Appt } from '@/app/(dashboard)/page'
-
-export default function ListView({items,loading,onChanged}:{items:Appt[],loading:boolean,onChanged:()=>void}){
-  const mutate = async (id:string, patch:any)=>{
-    const { error } = await supabase.from('appointments').update(patch).eq('id',id); if(!error) onChanged()
-  }
-  const remove = async (id:string)=>{ if(confirm('Termin löschen?')){ const {error}=await supabase.from('appointments').delete().eq('id',id); if(!error) onChanged() } }
+ const filtered = mode==='active'
+    ? items.filter(a=>a.status==='geplant')
+    : items.filter(a=>a.status!=='geplant')
 
   return (
     <section className="space-y-2">
