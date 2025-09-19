@@ -1,11 +1,26 @@
-import { createEvents } from 'ics'
+import { createEvents, EventAttributes } from 'ics'
+
 export type IcsItem = { title:string; start:Date; end:Date; description?:string }
-export const makeICS = (items:IcsItem[])=> new Promise<string>((resolve,reject)=>{
-  const events = items.map(i=>({
+
+export const makeICS = (items:IcsItem[]) => new Promise<string>((resolve,reject) => {
+  // Hilfsfunktion: macht aus Date ein 5er-Tupel [YYYY, M, D, HH, mm]
+  const toDT = (d: Date): [number, number, number, number, number] => ([
+    d.getFullYear(),
+    d.getMonth() + 1,
+    d.getDate(),
+    d.getHours(),
+    d.getMinutes()
+  ])
+
+  const events: EventAttributes[] = items.map(i => ({
     title: i.title,
-    start: [i.start.getFullYear(), i.start.getMonth()+1, i.start.getDate(), i.start.getHours(), i.start.getMinutes()],
-    end:   [i.end.getFullYear(),   i.end.getMonth()+1,   i.end.getDate(),   i.end.getHours(),   i.end.getMinutes()],
-    description: i.description||''
+    start: toDT(i.start),
+    end: toDT(i.end),
+    description: i.description || ''
   }))
-  createEvents(events, (err, value)=>{ if(err) reject(err); else resolve(value!) })
+
+  createEvents(events, (err, value) => {
+    if (err || !value) return reject(err || new Error('ICS error'))
+    resolve(value)
+  })
 })
