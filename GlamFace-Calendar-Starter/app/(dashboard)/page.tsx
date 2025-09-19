@@ -1,31 +1,67 @@
 'use client'
 import { useEffect, useState } from 'react'
-import dynamic from 'next/dynamic'
+import { supabase } from '@/lib/supabaseClient'
+import ListView from '@/components/ListView'
+import CalendarView from '@/components/CalendarView'
+import AppointmentForm from '@/components/AppointmentForm'
+import TopBar from '@/components/TopBar'
+import Header from '@/components/Header'
 
-const LogoUpload = dynamic(()=>import('@/components/LogoUpload'), { ssr:false })
+export type Appt = {
+  id: string
+  date: string
+  start_time: string
+  end_time: string
+  customer_name: string
+  service: string
+  notes?: string
+  phone?: string
+  status: 'geplant' | 'nicht_erschienen' | 'kurzfristig_abgesagt' | 'abgeschlossen'
+}
 
-export default function Settings(){
-  const [feed,setFeed]=useState('')
+export default function Dashboard(){
+  const [view, setView] = useState<'list'|'calendar'>('list')
+  const [mode, setMode] = useState<'active'|'archive'>('active')
+  const [items, setItems] = useState<Appt[]>([])
+  const [loading, setLoading] = useState(true)
 
-  useEffect(()=> {
-    // zeigt dir automatisch den richtigen Link an (deine Vercel-URL + Slug)
-    const slug = 'mein-team-feed'
-    setFeed(`${location.origin}/api/ics/${slug}`)
+  const load = async ()=>{
+    setLoading(true)
+    const { data } = await supabase
+      .from('appointments')
+      .select('*')
+      .order('date',{ascending:true})
+      .order('start_time',{ascending:true})
+    setItems((data||[]) as any)
+    setLoading(false)
+  }
+
+  useEffect(()=>{ 
+    load()
+    const ch = supabase.channel('realtime:appointments')
+      .on('postgres_changes', { event: '*', schema:'public', table:'appointments' }, load).subscribe()
+    return ()=>{ supabase.removeChannel(ch) }
   },[])
 
   return (
     <main className="space-y-4">
-      <h1 className="text-2xl font-semibold">Einstellungen</h1>
-
-      <section className="space-y-2">
-        <div className="font-medium">Privatkalender abonnieren (nur lesen)</div>
-        <div className="p-3 rounded-2xl bg-white break-all text-black">{feed}</div>
-        <div className="text-sm opacity-75">
-          iPhone: Einstellungen → Kalender → Accounts → Account hinzufügen → Andere → Kalenderabo hinzufügen → Link einfügen.
-        </div>
-      </section>
-
-      <LogoUpload />
+      <Header/>
+      <TopBar onViewChange={setView} current={view}/>
+      <div className="flex gap-2">
+        <button onClick={()=>setMode('active')}
+          className={`flex-1 p-3 rounded-2xl ${mode==='active'?'bg-black text-white':'bg-white text-black'}`}>
+          Aktiv
+        </button>
+        <button onClick={()=>setMode('archive')}
+          className={`flex-1 p-3 rounded-2xl ${mode==='archive'?'bg-black text-white':'bg-white text-black'}`}>
+          Archiv
+        </button>
+      </div>
+      <AppointmentForm onSaved={load}/>
+      {view==='list'
+        ? <ListView items={items} onChanged={load} loading={loading} mode={mode}/>
+        : <CalendarView items={items} onChanged={load} loading={loading} mode={mode}/>
+      }
     </main>
   )
 }
