@@ -12,12 +12,16 @@ export default function Header(){
   })() },[])
 
   return (
-    <div className="flex items-center gap-3 mb-2">
+    <header className="py-3 flex items-center justify-center">
       {logo ? (
-        <img src={logo} alt="GlamFace" className="h-8 w-auto rounded-xl"/>
+        <img
+          src={logo}
+          alt="GlamFace"
+          className="h-16 w-auto rounded-xl"   /* <- GRÖßER (h-16≈64px) */
+        />
       ) : (
-        <div className="text-lg font-semibold">GlamFace</div>
+        <div className="text-xl font-semibold">GlamFace</div>
       )}
-    </div>
+    </header>
   )
 }
