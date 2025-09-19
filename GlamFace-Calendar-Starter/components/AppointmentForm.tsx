@@ -2,29 +2,90 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
-export default function AppointmentForm({onSaved}:{onSaved:()=>void}){
-  const [form,setForm]=useState({customer_name:'',service:'',notes:'',phone:'',date:'',start_time:'',end_time:''})
-  const save=async()=>{
-    if(!form.date||!form.start_time||!form.end_time||!form.customer_name||!form.service){alert('Bitte Pflichtfelder ausfüllen');return}
-    const { error } = await supabase.from('appointments').insert({
-      date:form.date,start_time:form.start_time,end_time:form.end_time,
-      customer_name:form.customer_name,service:form.service,notes:form.notes,phone:form.phone
-    })
-    if(error){alert(error.message)} else { setForm({customer_name:'',service:'',notes:'',phone:'',date:'',start_time:'',end_time:''}); onSaved(); }
+export default function AppointmentForm({ onSaved }: { onSaved: () => void }) {
+  const [customer_name,setCustomer] = useState('')
+  const [service,setService] = useState('')
+  const [notes,setNotes] = useState('')
+  const [phone,setPhone] = useState('')
+  const [date,setDate] = useState('')
+  const [start_time,setStart] = useState('')
+  const [end_time,setEnd] = useState('')
+  const [saving,setSaving] = useState(false)
+
+  const save = async ()=>{
+    if(!customer_name || !service || !date || !start_time || !end_time){
+      alert('Bitte Name, Behandlung, Datum und Uhrzeit ausfüllen.')
+      return
+    }
+    setSaving(true)
+    const { error } = await supabase.from('appointments').insert([{
+      customer_name, service, notes, phone, date, start_time, end_time
+    }])
+    setSaving(false)
+    if(error){ alert(error.message); return }
+    setCustomer(''); setService(''); setNotes(''); setPhone('');
+    setDate(''); setStart(''); setEnd('');
+    onSaved()
   }
+
   return (
-    <section className="p-3 bg-white rounded-2xl text-black space-y-2">
-      <h2 className="font-medium">Neuer Termin</h2>
-      <input placeholder="Name der Kundin" className="w-full p-3 rounded-2xl bg-gray-100" value={form.customer_name} onChange={e=>setForm({...form,customer_name:e.target.value})}/>
-      <input placeholder="Behandlung" className="w-full p-3 rounded-2xl bg-gray-100" value={form.service} onChange={e=>setForm({...form,service:e.target.value})}/>
-      <textarea placeholder="Sonstiges / Notizen" className="w-full p-3 rounded-2xl bg-gray-100" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/>
-      <input placeholder="Telefonnummer" className="w-full p-3 rounded-2xl bg-gray-100" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/>
-      <div className="grid grid-cols-3 gap-2">
-        <input type="date" className="p-3 rounded-2xl bg-gray-100" value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/>
-        <input type="time" className="p-3 rounded-2xl bg-gray-100" value={form.start_time} onChange={e=>setForm({...form,start_time:e.target.value})}/>
-        <input type="time" className="p-3 rounded-2xl bg-gray-100" value={form.end_time} onChange={e=>setForm({...form,end_time:e.target.value})}/>
+    <section className="p-3 bg-white rounded-2xl text-black space-y-3">
+      <div className="grid grid-cols-1 gap-2">
+        <label className="block">
+          <span className="text-sm opacity-70">Name der Kundin</span>
+          <input className="w-full p-3 bg-gray-100 rounded-2xl"
+            placeholder="z. B. Maria Muster"
+            value={customer_name} onChange={e=>setCustomer(e.target.value)} />
+        </label>
+
+        <label className="block">
+          <span className="text-sm opacity-70">Behandlung</span>
+          <input className="w-full p-3 bg-gray-100 rounded-2xl"
+            placeholder="z. B. Wimpern"
+            value={service} onChange={e=>setService(e.target.value)} />
+        </label>
+
+        <label className="block">
+          <span className="text-sm opacity-70">Sonstiges / Notizen</span>
+          <textarea className="w-full p-3 bg-gray-100 rounded-2xl"
+            placeholder="Besondere Hinweise…"
+            value={notes} onChange={e=>setNotes(e.target.value)} />
+        </label>
+
+        <label className="block">
+          <span className="text-sm opacity-70">Telefonnummer</span>
+          <input className="w-full p-3 bg-gray-100 rounded-2xl"
+            placeholder="+49…"
+            value={phone} onChange={e=>setPhone(e.target.value)} />
+        </label>
+
+        <div className="grid grid-cols-3 gap-2">
+          <label className="block">
+            <span className="text-sm opacity-70">Datum</span>
+            <input type="date" className="w-full p-3 bg-gray-100 rounded-2xl"
+              value={date} onChange={e=>setDate(e.target.value)} />
+          </label>
+
+          <label className="block">
+            <span className="text-sm opacity-70">Uhrzeit von</span>
+            <input type="time" className="w-full p-3 bg-gray-100 rounded-2xl"
+              value={start_time} onChange={e=>setStart(e.target.value)} />
+          </label>
+
+          <label className="block">
+            <span className="text-sm opacity-70">bis</span>
+            <input type="time" className="w-full p-3 bg-gray-100 rounded-2xl"
+              value={end_time} onChange={e=>setEnd(e.target.value)} />
+          </label>
+        </div>
       </div>
-      <button onClick={save} className="w-full p-3 bg-black text-white">Speichern</button>
+
+      <button
+        className="w-full p-3 bg-black text-white rounded-2xl disabled:opacity-50"
+        onClick={save} disabled={saving}
+      >
+        {saving ? 'Speichere…' : 'Speichern'}
+      </button>
     </section>
   )
 }
