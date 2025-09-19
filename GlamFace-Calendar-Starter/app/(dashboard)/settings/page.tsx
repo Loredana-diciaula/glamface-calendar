@@ -1,19 +1,30 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import dynamic from 'next/dynamic'
+
+const LogoUpload = dynamic(()=>import('@/components/LogoUpload'), { ssr:false })
 
 export default function Settings(){
   const [feed,setFeed]=useState('')
-  useEffect(()=>{ (async()=>{
-    const slug = 'mein-team-feed' // TODO: aus DB laden
+
+  useEffect(()=>{
+    const slug = 'mein-team-feed'
     setFeed(`${location.origin}/api/ics/${slug}`)
-  })() },[])
+  },[])
+
   return (
-    <main className="space-y-3">
+    <main className="space-y-4">
       <h1 className="text-2xl font-semibold">Einstellungen</h1>
-      <p><b>Privatkalender abonnieren (nur lesen)</b>: Diese URL in Apple Kalender → Kalender abonnieren einfügen:</p>
-      <div className="p-3 rounded-2xl bg-white break-all text-black">{feed}</div>
-      <p className="opacity-80 text-sm">Alles, was ihr in GlamFace eintragt, erscheint automatisch in euren privaten Kalendern. Umgekehrt wird nichts importiert.</p>
+
+      <section className="space-y-2">
+        <div className="font-medium">Privatkalender abonnieren (nur lesen)</div>
+        <div className="p-3 rounded-2xl bg-white break-all text-black">{feed}</div>
+        <div className="text-sm opacity-75">
+          iPhone: Einstellungen → Kalender → Accounts → Account hinzufügen → Andere → Kalenderabo hinzufügen → Link einfügen.
+        </div>
+      </section>
+
+      <LogoUpload />
     </main>
   )
 }
