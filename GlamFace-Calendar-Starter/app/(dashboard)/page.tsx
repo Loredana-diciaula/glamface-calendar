@@ -21,7 +21,7 @@ export type Appt = {
 
 export default function Dashboard(){
   const [view, setView] = useState<'list'|'calendar'>('list')
-  const [mode, setMode] = useState<'active'|'archive'>('active')
+  const [mode, setMode] = useState<'active'|'archive'>('active') // Standard: Aktiv
   const [items, setItems] = useState<Appt[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -46,18 +46,10 @@ export default function Dashboard(){
   return (
     <main className="space-y-4">
       <Header/>
-      <TopBar onViewChange={setView} current={view}/>
-      <div className="flex gap-2">
-        <button onClick={()=>setMode('active')}
-          className={`flex-1 p-3 rounded-2xl ${mode==='active'?'bg-black text-white':'bg-white text-black'}`}>
-          Aktiv
-        </button>
-        <button onClick={()=>setMode('archive')}
-          className={`flex-1 p-3 rounded-2xl ${mode==='archive'?'bg-black text-white':'bg-white text-black'}`}>
-          Archiv
-        </button>
-      </div>
+      <TopBar current={view} onViewChange={setView} mode={mode} onModeChange={setMode} />
+
       <AppointmentForm onSaved={load}/>
+
       {view==='list'
         ? <ListView items={items} onChanged={load} loading={loading} mode={mode}/>
         : <CalendarView items={items} onChanged={load} loading={loading} mode={mode}/>
