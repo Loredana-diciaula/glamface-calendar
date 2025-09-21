@@ -48,24 +48,28 @@ export default function Dashboard(){
     return ()=>{ supabase.removeChannel(ch) }
   },[])
 
-  // Öffner
-  const openEdit = (a: Appt)=>{ setModalInitial(a); setModalOpen(true) }
-  const openCreateForDate = (isoDate: string)=>{ setModalInitial({ date: isoDate }); setModalOpen(true) }
+  const readonly = mode === 'archive' // Archiv: nur lesen
+
+  const openEdit = (a: Appt)=>{ if(!readonly){ setModalInitial(a); setModalOpen(true) } }
+  const openCreateForDate = (isoDate: string)=>{ if(!readonly){ setModalInitial({ date: isoDate }); setModalOpen(true) } }
 
   return (
     <main className="space-y-4">
       <Header/>
       <TopBar current={view} onViewChange={setView} mode={mode} onModeChange={setMode} />
 
-      {/* Das kleine Formular bleibt – für schnellen Neu-Eintrag */}
-      <AppointmentForm onSaved={load}/>
+      {/* Formular nur in AKTIV zeigen */}
+      {!readonly && <AppointmentForm onSaved={load}/>}
 
       {view==='list'
-        ? <ListView items={items} onChanged={load} loading={loading} mode={mode} onEdit={openEdit}/>
-        : <CalendarView items={items} onChanged={load} loading={loading} mode={mode} onEdit={openEdit} onCreate={openCreateForDate}/>
+        ? <ListView items={items} onChanged={load} loading={loading} mode={mode} onEdit={openEdit} readonly={readonly}/>
+        : <CalendarView items={items} onChanged={load} loading={loading} mode={mode} onEdit={openEdit} onCreate={openCreateForDate} readonly={readonly}/>
       }
 
-      <ApptModal open={modalOpen} onClose={()=>setModalOpen(false)} initial={modalInitial} onSaved={load}/>
+      {/* Modal öffnet sich nur in aktivem Modus */}
+      {!readonly && (
+        <ApptModal open={modalOpen} onClose={()=>setModalOpen(false)} initial={modalInitial} onSaved={load}/>
+      )}
     </main>
   )
 }
