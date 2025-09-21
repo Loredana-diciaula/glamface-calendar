@@ -17,7 +17,7 @@ export default function Header(){
         <img
           src={logo}
           alt="GlamFace"
-          className="h-32 sm:h-36 md:h-40 w-auto object-contain rounded-xl"
+          className="h-40 w-auto object-contain rounded-xl"
           /* h-32 ≈ 128px, bei Bedarf auf h-40/h-48 erhöhen */
         />
       ) : (
