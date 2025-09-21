@@ -17,8 +17,8 @@ export default function Header(){
         <img
           src={logo}
           alt="GlamFace"
-          className="h-24 sm:h-28 md:h-32 w-auto object-contain rounded-xl"
-          /* h-24 ≈ 96px; wenn du noch größer willst -> h-32 / h-40 */
+          className="h-32 sm:h-36 md:h-40 w-auto object-contain rounded-xl"
+          /* h-32 ≈ 128px, bei Bedarf auf h-40/h-48 erhöhen */
         />
       ) : (
         <div className="text-2xl font-semibold">GlamFace</div>
