@@ -19,6 +19,19 @@ export default function TopBar({
 
   return (
     <div className="flex items-center gap-2 relative">
+      {/* Hamburger links */}
+      <button
+        className="px-3 py-3 rounded-2xl bg-white text-black"
+        onClick={()=>setOpen(v=>!v)}
+        aria-expanded={open}
+        aria-label="Menü"
+      >
+        {/* drei Striche */}
+        <span className="block w-6 h-0.5 bg-black mb-1"></span>
+        <span className="block w-6 h-0.5 bg-black mb-1"></span>
+        <span className="block w-6 h-0.5 bg-black"></span>
+      </button>
+
       {/* Reiter: Liste | Kalender */}
       <button
         className={`flex-1 p-3 rounded-2xl ${current==='list' ? 'bg-black text-white' : 'bg-white text-black'}`}
@@ -29,20 +42,10 @@ export default function TopBar({
         onClick={() => onViewChange('calendar')}
       >Kalender</button>
 
-      {/* Menü-Button */}
-      <button
-        className="px-3 py-3 rounded-2xl bg-white text-black"
-        onClick={()=>setOpen(v=>!v)}
-        aria-expanded={open}
-        aria-haspopup="menu"
-      >
-        Menü ▾
-      </button>
-
-      {/* Dropdown */}
+      {/* Dropdown vom Hamburger */}
       {open && (
         <div
-          className="absolute right-0 top-12 z-10 w-44 rounded-2xl bg-white text-black shadow-lg overflow-hidden"
+          className="absolute left-0 top-14 z-10 w-48 rounded-2xl bg-white text-black shadow-lg overflow-hidden"
           role="menu"
         >
           <button
