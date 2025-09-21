@@ -1,4 +1,3 @@
-// trigger build
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
@@ -9,6 +8,7 @@ import TopBar from '@/components/TopBar'
 import Header from '@/components/Header'
 import ApptModal from '@/components/ApptModal'
 
+// Hier ist der Typ für einen Termin
 export type Appt = {
   id: string
   date: string
@@ -22,20 +22,25 @@ export type Appt = {
   archived_at?: string | null
 }
 
-export default function Dashboard(){
+export default function Dashboard() {
   const [view, setView] = useState<'list'|'calendar'>('list')
-  const [mode, setMode] = useState<'active'|'archive'>('active')
+  const [mode, setMode] = useState<'active'|'archive'>('active')   // Umschalten Aktiv/Archiv
   const [items, setItems] = useState<Appt[]>([])
   const [loading, setLoading] = useState(true)
 
   const [modalOpen, setModalOpen] = useState(false)
   const [modalInitial, setModalInitial] = useState<Partial<Appt> | undefined>(undefined)
 
+  // Termine laden
   const load = async ()=>{
     setLoading(true)
     let query = supabase.from('appointments').select('*')
-    if (mode === 'archive') query = query.not('archived_at','is', null)
-    else query = query.is('archived_at', null)
+
+    if (mode === 'archive') {
+      query = query.not('archived_at','is', null)   // nur archivierte
+    } else {
+      query = query.is('archived_at', null)         // nur aktive
+    }
 
     const { data } = await query
       .order('date',{ascending:true})
@@ -45,14 +50,16 @@ export default function Dashboard(){
     setLoading(false)
   }
 
+  // Beim Start + bei Moduswechsel neu laden
   useEffect(()=>{ 
     load()
     const ch = supabase.channel('realtime:appointments')
-      .on('postgres_changes', { event: '*', schema:'public', table:'appointments' }, load).subscribe()
+      .on('postgres_changes', { event: '*', schema:'public', table:'appointments' }, load)
+      .subscribe()
     return ()=>{ supabase.removeChannel(ch) }
   },[mode])
 
-  const readonly = mode === 'archive'
+  const readonly = mode === 'archive'   // Im Archiv: keine neuen Einträge
 
   const openEdit = (a: Appt)=>{ if(!readonly){ setModalInitial(a); setModalOpen(true) } }
   const openCreateForDate = (isoDate: string)=>{ if(!readonly){ setModalInitial({ date: isoDate }); setModalOpen(true) } }
@@ -60,10 +67,14 @@ export default function Dashboard(){
   return (
     <main className="space-y-4">
       <Header/>
+
+      {/* Umschalter oben: Liste/Kalender + Aktiv/Archiv */}
       <TopBar current={view} onViewChange={setView} mode={mode} onModeChange={setMode} />
 
+      {/* Formular nur in aktivem Modus */}
       {!readonly && <AppointmentForm onSaved={load}/>}
 
+      {/* Ansicht wechseln */}
       {view==='list'
         ? <ListView
             items={items}
@@ -84,8 +95,14 @@ export default function Dashboard(){
           />
       }
 
+      {/* Popup-Fenster zum Bearbeiten */}
       {!readonly && (
-        <ApptModal open={modalOpen} onClose={()=>setModalOpen(false)} initial={modalInitial} onSaved={load}/>
+        <ApptModal
+          open={modalOpen}
+          onClose={()=>setModalOpen(false)}
+          initial={modalInitial}
+          onSaved={load}
+        />
       )}
     </main>
   )
