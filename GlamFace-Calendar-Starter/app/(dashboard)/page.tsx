@@ -7,6 +7,7 @@ import AppointmentForm from '@/components/AppointmentForm'
 import TopBar from '@/components/TopBar'
 import Header from '@/components/Header'
 import ApptModal from '@/components/ApptModal'
+import { archiveAppt, restoreAppt, deleteAppt } from '@/lib/archive'
 
 export type Appt = {
   id: string
@@ -18,6 +19,7 @@ export type Appt = {
   notes?: string
   phone?: string
   status: 'geplant' | 'nicht_erschienen' | 'kurzfristig_abgesagt' | 'abgeschlossen'
+  archived_at?: string | null
 }
 
 export default function Dashboard(){
@@ -32,11 +34,18 @@ export default function Dashboard(){
 
   const load = async ()=>{
     setLoading(true)
-    const { data } = await supabase
-      .from('appointments')
-      .select('*')
+    let query = supabase.from('appointments').select('*')
+
+    if (mode === 'archive') {
+      query = query.not('archived_at','is', null)
+    } else {
+      query = query.is('archived_at', null)
+    }
+
+    const { data } = await query
       .order('date',{ascending:true})
       .order('start_time',{ascending:true})
+
     setItems((data||[]) as any)
     setLoading(false)
   }
@@ -46,9 +55,9 @@ export default function Dashboard(){
     const ch = supabase.channel('realtime:appointments')
       .on('postgres_changes', { event: '*', schema:'public', table:'appointments' }, load).subscribe()
     return ()=>{ supabase.removeChannel(ch) }
-  },[])
+  },[mode])
 
-  const readonly = mode === 'archive' // Archiv: nur lesen
+  const readonly = mode === 'archive'
 
   const openEdit = (a: Appt)=>{ if(!readonly){ setModalInitial(a); setModalOpen(true) } }
   const openCreateForDate = (isoDate: string)=>{ if(!readonly){ setModalInitial({ date: isoDate }); setModalOpen(true) } }
@@ -58,15 +67,40 @@ export default function Dashboard(){
       <Header/>
       <TopBar current={view} onViewChange={setView} mode={mode} onModeChange={setMode} />
 
-      {/* Formular nur in AKTIV zeigen */}
       {!readonly && <AppointmentForm onSaved={load}/>}
 
       {view==='list'
-        ? <ListView items={items} onChanged={load} loading={loading} mode={mode} onEdit={openEdit} readonly={readonly}/>
-        : <CalendarView items={items} onChanged={load} loading={loading} mode={mode} onEdit={openEdit} onCreate={openCreateForDate} readonly={readonly}/>
+        ? <ListView
+            items={items}
+            onChanged={load}
+            loading={loading}
+            mode={mode}
+            onEdit={openEdit}
+            readonly={readonly}
+            onArchive={async(id:string)=>{ await archiveAppt(id); load() }}
+            onRestore={async(id:string)=>{ await restoreAppt(id); load() }}
+            onHardDelete={async(id:string)=>{
+              if(!confirm('Diesen Termin endgültig löschen? Das kann NICHT rückgängig gemacht werden.')) return
+              await deleteAppt(id); load()
+            }}
+          />
+        : <CalendarView
+            items={items}
+            onChanged={load}
+            loading={loading}
+            mode={mode}
+            onEdit={openEdit}
+            onCreate={openCreateForDate}
+            readonly={readonly}
+            onArchive={async(id:string)=>{ await archiveAppt(id); load() }}
+            onRestore={async(id:string)=>{ await restoreAppt(id); load() }}
+            onHardDelete={async(id:string)=>{
+              if(!confirm('Diesen Termin endgültig löschen?')) return
+              await deleteAppt(id); load()
+            }}
+          />
       }
 
-      {/* Modal öffnet sich nur in aktivem Modus */}
       {!readonly && (
         <ApptModal open={modalOpen} onClose={()=>setModalOpen(false)} initial={modalInitial} onSaved={load}/>
       )}
