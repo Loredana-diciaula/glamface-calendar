@@ -11,9 +11,10 @@ type Props = {
   onChanged: () => void
   mode: 'active' | 'archive'
   onEdit: (a: Appt) => void
+  readonly?: boolean // true = Archiv-Ansicht, keine Aktionen
 }
 
-export default function ListView({ items, loading, onChanged, mode, onEdit }: Props) {
+export default function ListView({ items, loading, onChanged, mode, onEdit, readonly=false }: Props) {
   const mutate = async (id: string, patch: Partial<Appt>) => {
     const { error } = await supabase.from('appointments').update(patch).eq('id', id)
     if (!error) onChanged()
@@ -41,8 +42,8 @@ export default function ListView({ items, loading, onChanged, mode, onEdit }: Pr
         return (
           <article
             key={a.id}
-            className={`p-3 rounded-2xl ${past ? 'bg-gray-100/70' : 'bg-white'} text-black`}
-            onClick={()=>onEdit(a)}
+            className={`p-3 rounded-2xl ${past ? 'bg-gray-100/70' : 'bg-white'} text-black ${readonly ? 'cursor-default' : 'cursor-pointer'}`}
+            onClick={()=>{ if(!readonly) onEdit(a) }}
           >
             <div className="flex items-center justify-between">
               <div className="font-medium">{a.customer_name}</div>
@@ -56,17 +57,15 @@ export default function ListView({ items, loading, onChanged, mode, onEdit }: Pr
             {a.phone && <div className="text-sm">☎ {a.phone}</div>}
             {a.notes && <div className="text-sm">🗒 {a.notes}</div>}
 
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <button className="p-2 bg-black text-white" onClick={(e)=>{e.stopPropagation(); mutate(a.id, { status: 'abgeschlossen' })}}>Als abgeschlossen</button>
-              <button className="p-2 bg-gray-800 text-white" onClick={(e)=>{e.stopPropagation(); mutate(a.id, { status: 'nicht_erschienen' })}}>Nicht erschienen</button>
-              <button className="p-2 bg-gray-700 text-white" onClick={(e)=>{e.stopPropagation(); mutate(a.id, { status: 'kurzfristig_abgesagt' })}}>Kurzfr. abgesagt</button>
-              <button className="p-2 bg-gray-900 text-white" onClick={(e)=>{e.stopPropagation(); onEdit(a)}}>
-                Bearbeiten
-              </button>
-              <button className="col-span-2 p-2 bg-white border" onClick={(e)=>{e.stopPropagation(); remove(a.id)}}>
-                Löschen
-              </button>
-            </div>
+            {!readonly && (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button className="p-2 bg-black text-white" onClick={(e)=>{e.stopPropagation(); mutate(a.id, { status: 'abgeschlossen' })}}>Als abgeschlossen</button>
+                <button className="p-2 bg-gray-800 text-white" onClick={(e)=>{e.stopPropagation(); mutate(a.id, { status: 'nicht_erschienen' })}}>Nicht erschienen</button>
+                <button className="p-2 bg-gray-700 text-white" onClick={(e)=>{e.stopPropagation(); mutate(a.id, { status: 'kurzfristig_abgesagt' })}}>Kurzfr. abgesagt</button>
+                <button className="p-2 bg-gray-900 text-white" onClick={(e)=>{e.stopPropagation(); onEdit(a)}}>Bearbeiten</button>
+                <button className="col-span-2 p-2 bg-white border" onClick={(e)=>{e.stopPropagation(); remove(a.id)}}>Löschen</button>
+              </div>
+            )}
           </article>
         )
       })}
