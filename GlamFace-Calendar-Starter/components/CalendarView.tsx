@@ -11,9 +11,10 @@ type Props = {
   mode: 'active' | 'archive'
   onEdit: (a: Appt) => void
   onCreate: (isoDate: string) => void
+  readonly?: boolean // true = Archiv-Ansicht
 }
 
-export default function CalendarView({ items, loading, mode, onEdit, onCreate }: Props) {
+export default function CalendarView({ items, loading, mode, onEdit, onCreate, readonly=false }: Props) {
   const [month, setMonth] = useState(new Date())
   const [selected, setSelected] = useState<Date | null>(null)
 
@@ -22,7 +23,6 @@ export default function CalendarView({ items, loading, mode, onEdit, onCreate }:
     end: endOfMonth(month)
   }), [month])
 
-  // Filter nach Modus
   const filtered = mode==='active'
     ? items.filter(i=>i.status==='geplant')
     : items.filter(i=>i.status!=='geplant')
@@ -66,17 +66,19 @@ export default function CalendarView({ items, loading, mode, onEdit, onCreate }:
             >
               <span className="absolute top-1 left-1 text-xs opacity-60">{format(d,'d')}</span>
 
-              {/* Punkt bei Terminen */}
+              {/* grüner Punkt bei Terminen */}
               {hasItems(d) && (
-                <span className="absolute bottom-1 w-2 h-2 rounded-full bg-black"></span>
+                <span className="absolute bottom-1 w-2 h-2 rounded-full bg-green-600"></span>
               )}
 
-              {/* Plus immer anzeigen, damit du schnell neue Termine anlegen kannst */}
-              <button
-                className="absolute right-1 top-1 w-6 h-6 leading-6 rounded-full bg-black text-white text-center"
-                onClick={(e)=>{ e.stopPropagation(); onCreate(format(d,'yyyy-MM-dd')) }}
-                title="Neuer Termin"
-              >+</button>
+              {/* kleines Plus (ohne Kreis) – nur im aktiven Modus */}
+              {!readonly && (
+                <button
+                  className="absolute right-1 top-1 text-black text-lg leading-none"
+                  onClick={(e)=>{ e.stopPropagation(); onCreate(format(d,'yyyy-MM-dd')) }}
+                  title="Neuer Termin"
+                >+</button>
+              )}
             </div>
           )
         })}
@@ -87,11 +89,13 @@ export default function CalendarView({ items, loading, mode, onEdit, onCreate }:
         <div className="p-3 rounded-2xl bg-white text-black space-y-2">
           <div className="flex items-center justify-between">
             <div className="font-medium">{format(selected,'EEEE, dd.MM.yyyy',{locale:de})}</div>
-            <button className="px-3 py-1 rounded-2xl bg-black text-white"
-              onClick={()=>onCreate(format(selected,'yyyy-MM-dd'))}
-            >
-              Neuer Termin
-            </button>
+            {!readonly && (
+              <button className="px-3 py-1 rounded-2xl bg-black text-white"
+                onClick={()=>onCreate(format(selected,'yyyy-MM-dd'))}
+              >
+                Neuer Termin
+              </button>
+            )}
           </div>
 
           {itemsByDate(selected).length===0 ? (
@@ -99,17 +103,19 @@ export default function CalendarView({ items, loading, mode, onEdit, onCreate }:
           ) : (
             itemsByDate(selected).map(a=>(
               <div key={a.id}
-                className="p-2 rounded-xl bg-gray-100 flex items-center justify-between"
-                onClick={()=>onEdit(a)}
+                className={`p-2 rounded-xl bg-gray-100 flex items-center justify-between ${readonly ? 'cursor-default' : 'cursor-pointer'}`}
+                onClick={()=>{ if(!readonly) onEdit(a) }}
               >
                 <div>
                   <div className="font-medium">{a.customer_name}</div>
                   <div className="text-sm opacity-80">{a.service}</div>
                   <div className="text-sm">{a.start_time.substring(0,5)} – {a.end_time.substring(0,5)} Uhr</div>
                 </div>
-                <button className="px-3 py-1 rounded-2xl bg-black text-white"
-                  onClick={(e)=>{e.stopPropagation(); onEdit(a)}}
-                >Bearbeiten</button>
+                {!readonly && (
+                  <button className="px-3 py-1 rounded-2xl bg-black text-white"
+                    onClick={(e)=>{e.stopPropagation(); onEdit(a)}}
+                  >Bearbeiten</button>
+                )}
               </div>
             ))
           )}
