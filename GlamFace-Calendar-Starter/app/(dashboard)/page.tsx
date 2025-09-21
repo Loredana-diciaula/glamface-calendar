@@ -8,7 +8,6 @@ import TopBar from '@/components/TopBar'
 import Header from '@/components/Header'
 import ApptModal from '@/components/ApptModal'
 
-// Hier ist der Typ für einen Termin
 export type Appt = {
   id: string
   date: string
@@ -24,33 +23,25 @@ export type Appt = {
 
 export default function Dashboard() {
   const [view, setView] = useState<'list'|'calendar'>('list')
-  const [mode, setMode] = useState<'active'|'archive'>('active')   // Umschalten Aktiv/Archiv
+  const [mode, setMode] = useState<'active'|'archive'>('active')
   const [items, setItems] = useState<Appt[]>([])
   const [loading, setLoading] = useState(true)
 
   const [modalOpen, setModalOpen] = useState(false)
   const [modalInitial, setModalInitial] = useState<Partial<Appt> | undefined>(undefined)
 
-  // Termine laden
+  // Termine laden (active = ohne Archiv, archive = nur archivierte)
   const load = async ()=>{
     setLoading(true)
     let query = supabase.from('appointments').select('*')
-
-    if (mode === 'archive') {
-      query = query.not('archived_at','is', null)   // nur archivierte
-    } else {
-      query = query.is('archived_at', null)         // nur aktive
-    }
-
-    const { data } = await query
-      .order('date',{ascending:true})
-      .order('start_time',{ascending:true})
-
+    if (mode === 'archive') query = query.not('archived_at','is', null)
+    else query = query.is('archived_at', null)
+    const { data } = await query.order('date',{ascending:true}).order('start_time',{ascending:true})
     setItems((data||[]) as any)
     setLoading(false)
   }
 
-  // Beim Start + bei Moduswechsel neu laden
+  // beim Start + bei Moduswechsel neu laden
   useEffect(()=>{ 
     load()
     const ch = supabase.channel('realtime:appointments')
@@ -59,22 +50,19 @@ export default function Dashboard() {
     return ()=>{ supabase.removeChannel(ch) }
   },[mode])
 
-  const readonly = mode === 'archive'   // Im Archiv: keine neuen Einträge
-
+  const readonly = mode === 'archive'
   const openEdit = (a: Appt)=>{ if(!readonly){ setModalInitial(a); setModalOpen(true) } }
   const openCreateForDate = (isoDate: string)=>{ if(!readonly){ setModalInitial({ date: isoDate }); setModalOpen(true) } }
 
   return (
     <main className="space-y-4">
       <Header/>
+      {/* Sichtbarer Marker, damit du erkennst, dass das neue Build geladen ist */}
+      <div style={{padding:8, background:'#FFF3BF', borderRadius:8}}>Build-Marker: v50</div>
 
-      {/* Umschalter oben: Liste/Kalender + Aktiv/Archiv */}
       <TopBar current={view} onViewChange={setView} mode={mode} onModeChange={setMode} />
-
-      {/* Formular nur in aktivem Modus */}
       {!readonly && <AppointmentForm onSaved={load}/>}
 
-      {/* Ansicht wechseln */}
       {view==='list'
         ? <ListView
             items={items}
@@ -95,7 +83,6 @@ export default function Dashboard() {
           />
       }
 
-      {/* Popup-Fenster zum Bearbeiten */}
       {!readonly && (
         <ApptModal
           open={modalOpen}
