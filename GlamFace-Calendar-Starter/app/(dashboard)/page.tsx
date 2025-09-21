@@ -6,6 +6,7 @@ import CalendarView from '@/components/CalendarView'
 import AppointmentForm from '@/components/AppointmentForm'
 import TopBar from '@/components/TopBar'
 import Header from '@/components/Header'
+import ApptModal from '@/components/ApptModal'
 
 export type Appt = {
   id: string
@@ -25,6 +26,10 @@ export default function Dashboard(){
   const [items, setItems] = useState<Appt[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Modal-State
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalInitial, setModalInitial] = useState<Partial<Appt> | undefined>(undefined)
+
   const load = async ()=>{
     setLoading(true)
     const { data } = await supabase
@@ -43,17 +48,24 @@ export default function Dashboard(){
     return ()=>{ supabase.removeChannel(ch) }
   },[])
 
+  // Öffner
+  const openEdit = (a: Appt)=>{ setModalInitial(a); setModalOpen(true) }
+  const openCreateForDate = (isoDate: string)=>{ setModalInitial({ date: isoDate }); setModalOpen(true) }
+
   return (
     <main className="space-y-4">
       <Header/>
       <TopBar current={view} onViewChange={setView} mode={mode} onModeChange={setMode} />
 
+      {/* Das kleine Formular bleibt – für schnellen Neu-Eintrag */}
       <AppointmentForm onSaved={load}/>
 
       {view==='list'
-        ? <ListView items={items} onChanged={load} loading={loading} mode={mode}/>
-        : <CalendarView items={items} onChanged={load} loading={loading} mode={mode}/>
+        ? <ListView items={items} onChanged={load} loading={loading} mode={mode} onEdit={openEdit}/>
+        : <CalendarView items={items} onChanged={load} loading={loading} mode={mode} onEdit={openEdit} onCreate={openCreateForDate}/>
       }
+
+      <ApptModal open={modalOpen} onClose={()=>setModalOpen(false)} initial={modalInitial} onSaved={load}/>
     </main>
   )
 }
