@@ -7,7 +7,6 @@ import AppointmentForm from '@/components/AppointmentForm'
 import TopBar from '@/components/TopBar'
 import Header from '@/components/Header'
 import ApptModal from '@/components/ApptModal'
-import { archiveAppt, restoreAppt, deleteAppt } from '@/lib/archive'
 
 export type Appt = {
   id: string
@@ -24,23 +23,18 @@ export type Appt = {
 
 export default function Dashboard(){
   const [view, setView] = useState<'list'|'calendar'>('list')
-  const [mode, setMode] = useState<'active'|'archive'>('active') // Standard: Aktiv
+  const [mode, setMode] = useState<'active'|'archive'>('active')
   const [items, setItems] = useState<Appt[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Modal-State
   const [modalOpen, setModalOpen] = useState(false)
   const [modalInitial, setModalInitial] = useState<Partial<Appt> | undefined>(undefined)
 
   const load = async ()=>{
     setLoading(true)
     let query = supabase.from('appointments').select('*')
-
-    if (mode === 'archive') {
-      query = query.not('archived_at','is', null)
-    } else {
-      query = query.is('archived_at', null)
-    }
+    if (mode === 'archive') query = query.not('archived_at','is', null)
+    else query = query.is('archived_at', null)
 
     const { data } = await query
       .order('date',{ascending:true})
@@ -77,12 +71,6 @@ export default function Dashboard(){
             mode={mode}
             onEdit={openEdit}
             readonly={readonly}
-            onArchive={async(id:string)=>{ await archiveAppt(id); load() }}
-            onRestore={async(id:string)=>{ await restoreAppt(id); load() }}
-            onHardDelete={async(id:string)=>{
-              if(!confirm('Diesen Termin endgültig löschen? Das kann NICHT rückgängig gemacht werden.')) return
-              await deleteAppt(id); load()
-            }}
           />
         : <CalendarView
             items={items}
@@ -92,12 +80,6 @@ export default function Dashboard(){
             onEdit={openEdit}
             onCreate={openCreateForDate}
             readonly={readonly}
-            onArchive={async(id:string)=>{ await archiveAppt(id); load() }}
-            onRestore={async(id:string)=>{ await restoreAppt(id); load() }}
-            onHardDelete={async(id:string)=>{
-              if(!confirm('Diesen Termin endgültig löschen?')) return
-              await deleteAppt(id); load()
-            }}
           />
       }
 
