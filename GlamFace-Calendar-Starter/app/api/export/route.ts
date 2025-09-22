@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import type { NextRequest } from 'next/server'
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -11,16 +12,16 @@ function esc(v: any) {
   return `"${s}"`
 }
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url)
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)  // jetzt gültig
 
-  // Sicherheit: Token prüfen (gleich wie beim iPhone-Feed)
+  // Sicherheit: Token prüfen
   const token = searchParams.get('token')
   if (!token || token !== SECRET) {
     return new NextResponse('Unauthorized', { status: 401 })
   }
 
-  // scope: all | active | archived  (Standard: all)
+  // scope: all | active | archived
   const scope = (searchParams.get('scope') || 'all').toLowerCase()
 
   const supabase = createClient(URL, KEY)
@@ -67,7 +68,7 @@ export async function GET(req: Request) {
     a.archived_at
   ])
 
-  // CSV zusammenbauen
+  // CSV bauen
   const csv =
     headers.map(esc).join(',') +
     '\r\n' +
