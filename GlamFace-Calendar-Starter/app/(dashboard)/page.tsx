@@ -57,8 +57,6 @@ export default function Dashboard() {
   return (
     <main className="space-y-4">
       <Header/>
-      {/* Sichtbarer Marker, damit du erkennst, dass das neue Build geladen ist */}
-      <div style={{padding:8, background:'#FFF3BF', borderRadius:8}}>Build-Marker: v50</div>
 
       <TopBar current={view} onViewChange={setView} mode={mode} onModeChange={setMode} />
       {!readonly && <AppointmentForm onSaved={load}/>}
