@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import type { NextRequest } from 'next/server'
 
-// WICHTIG: keine Konstante "URL" nennen! Sonst überschattet sie die globale URL-Klasse.
+// WICHTIG: Keine Variable "URL" verwenden, sonst überschattet sie die globale URL-Klasse!
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const SECRET = process.env.NEXT_PUBLIC_ICS_SIGNING_SECRET || 'wechselmich123'
@@ -14,7 +14,7 @@ function esc(v: any) {
 }
 
 export async function GET(req: NextRequest) {
-  // Hier bewusst globalThis.URL, damit es garantiert die echte URL-Klasse ist
+  // Explizit globalThis.URL, damit sicher die echte URL-Klasse genutzt wird
   const { searchParams } = new globalThis.URL(req.url)
 
   // Token prüfen
