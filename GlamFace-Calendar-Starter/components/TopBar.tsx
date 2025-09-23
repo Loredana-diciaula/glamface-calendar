@@ -7,11 +7,13 @@ type Props = {
   onViewChange: (v: View) => void
   mode: Mode
   onModeChange: (m: Mode) => void
+  query: string
+  onQueryChange: (s: string) => void
 }
 
 const TOKEN = process.env.NEXT_PUBLIC_ICS_SIGNING_SECRET || 'wechselmich123'
 
-export default function TopBar({ current, onViewChange, mode, onModeChange }: Props) {
+export default function TopBar({ current, onViewChange, mode, onModeChange, query, onQueryChange }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       {/* Ansicht: Liste / Kalender */}
@@ -50,28 +52,27 @@ export default function TopBar({ current, onViewChange, mode, onModeChange }: Pr
         </button>
       </div>
 
+      {/* 🔎 Suche: Name / Telefon / Service */}
+      <input
+        className="px-3 py-2 rounded-2xl border flex-1 min-w-[220px]"
+        placeholder="Suche (Name, Telefon, Service)…"
+        value={query}
+        onChange={(e)=>onQueryChange(e.target.value)}
+      />
+
       {/* Export-Menü */}
-      <details className="ml-auto">
+      <details>
         <summary className="cursor-pointer px-3 py-2 rounded-2xl bg-black text-white">
           Export
         </summary>
         <div className="mt-2 p-2 bg-white border rounded-2xl shadow text-sm flex flex-col">
-          <a
-            className="px-3 py-2 hover:bg-gray-100 rounded-2xl"
-            href={`/api/export?token=${TOKEN}`}
-          >
+          <a className="px-3 py-2 hover:bg-gray-100 rounded-2xl" href={`/api/export?token=${TOKEN}`}>
             CSV – alle Termine
           </a>
-          <a
-            className="px-3 py-2 hover:bg-gray-100 rounded-2xl"
-            href={`/api/export?token=${TOKEN}&scope=active`}
-          >
+          <a className="px-3 py-2 hover:bg-gray-100 rounded-2xl" href={`/api/export?token=${TOKEN}&scope=active`}>
             CSV – nur aktive
           </a>
-          <a
-            className="px-3 py-2 hover:bg-gray-100 rounded-2xl"
-            href={`/api/export?token=${TOKEN}&scope=archived`}
-          >
+          <a className="px-3 py-2 hover:bg-gray-100 rounded-2xl" href={`/api/export?token=${TOKEN}&scope=archived`}>
             CSV – nur archivierte
           </a>
         </div>
