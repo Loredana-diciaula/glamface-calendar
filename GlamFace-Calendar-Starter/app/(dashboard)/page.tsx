@@ -26,7 +26,7 @@ export default function Dashboard() {
   const [mode, setMode] = useState<'active'|'archive'>('active')
   const [items, setItems] = useState<Appt[]>([])
   const [loading, setLoading] = useState(true)
-  const [query, setQuery] = useState('') // 🔎 Suchtext
+  const [search, setSearch] = useState('')
 
   const [modalOpen, setModalOpen] = useState(false)
   const [modalInitial, setModalInitial] = useState<Partial<Appt> | undefined>(undefined)
@@ -34,14 +34,15 @@ export default function Dashboard() {
   // Termine laden (active = ohne Archiv, archive = nur archivierte)
   const load = async ()=>{
     setLoading(true)
-    let q = supabase.from('appointments').select('*')
-    if (mode === 'archive') q = q.not('archived_at','is', null)
-    else q = q.is('archived_at', null)
-    const { data } = await q.order('date',{ascending:true}).order('start_time',{ascending:true})
+    let query = supabase.from('appointments').select('*')
+    if (mode === 'archive') query = query.not('archived_at','is', null)
+    else query = query.is('archived_at', null)
+    const { data } = await query.order('date',{ascending:true}).order('start_time',{ascending:true})
     setItems((data||[]) as any)
     setLoading(false)
   }
 
+  // beim Start + bei Moduswechsel neu laden
   useEffect(()=>{ 
     load()
     const ch = supabase.channel('realtime:appointments')
@@ -54,34 +55,38 @@ export default function Dashboard() {
   const openEdit = (a: Appt)=>{ if(!readonly){ setModalInitial(a); setModalOpen(true) } }
   const openCreateForDate = (isoDate: string)=>{ if(!readonly){ setModalInitial({ date: isoDate }); setModalOpen(true) } }
 
-  // 🔎 Client-Side-Filter: Name / Telefon / Service
-  const q = query.trim().toLowerCase()
-  const itemsFiltered = q
-    ? items.filter(a =>
-        [a.customer_name, a.phone, a.service]
-          .map(v => (v||'').toLowerCase())
-          .some(v => v.includes(q))
-      )
-    : items
+  // Suchfilter anwenden
+  const filteredItems = items.filter(a => {
+    const term = search.toLowerCase()
+    return (
+      a.customer_name?.toLowerCase().includes(term) ||
+      a.phone?.toLowerCase().includes(term) ||
+      a.service?.toLowerCase().includes(term) ||
+      a.notes?.toLowerCase().includes(term)
+    )
+  })
 
   return (
     <main className="space-y-4">
       <Header/>
 
-      <TopBar
-        current={view}
-        onViewChange={setView}
-        mode={mode}
-        onModeChange={setMode}
-        query={query}
-        onQueryChange={setQuery}
-      />
+      {/* Suchleiste */}
+      <div className="px-3">
+        <input
+          type="text"
+          placeholder="🔍 Suche nach Name, Telefon oder Service..."
+          value={search}
+          onChange={(e)=>setSearch(e.target.value)}
+          className="w-full p-2 rounded-xl border border-gray-300"
+        />
+      </div>
 
+      <TopBar current={view} onViewChange={setView} mode={mode} onModeChange={setMode} />
       {!readonly && <AppointmentForm onSaved={load}/>}
 
       {view==='list'
         ? <ListView
-            items={itemsFiltered}
+            items={filteredItems}
             onChanged={load}
             loading={loading}
             mode={mode}
@@ -89,7 +94,7 @@ export default function Dashboard() {
             readonly={readonly}
           />
         : <CalendarView
-            items={itemsFiltered}
+            items={filteredItems}
             onChanged={load}
             loading={loading}
             mode={mode}
